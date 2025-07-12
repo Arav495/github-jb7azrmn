@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBills } from '../hooks/useBills';
 import { Plus, Minus, CheckCircle, Calculator, User, Mail, DollarSign, Hash, FileText, Phone, Send, MessageSquare, AtSign } from 'lucide-react';
+import { sendBillToZapier } from '../utils/sendBillToZapier';
 
 interface BillItem {
   id: string;
@@ -128,7 +129,7 @@ const UploadBill = () => {
       };
 
       // Send bill via selected method(s)
-      const results = await sendBill(
+      const results = await sendBillToZapier(
         billContent,
         businessInfo,
         deliveryMethod,
