@@ -23,9 +23,11 @@ const sendBillToZapier = async (
     date: billContent.date
   };
 
-const response = await fetch("https://hooks.zapier.com/hooks/catch/23760436/u2ohknd/", {
+const response = await fetch("https://eoa8ejep3vj74y1.m.pipedream.net", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json"
+  },
   body: JSON.stringify(payload)
 });
 
