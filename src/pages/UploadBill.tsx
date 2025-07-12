@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useBills } from '../hooks/useBills';
 import { Plus, Minus, CheckCircle, Calculator, User, Mail, DollarSign, Hash, FileText, Phone, Send, MessageSquare, AtSign } from 'lucide-react';
-import { sendBillToZapier } from '../utils/sendBillToZapier';
+import sendBillToZapier from './sendBillToZapier';
 
 interface BillItem {
   id: string;
