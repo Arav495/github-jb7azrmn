@@ -23,13 +23,12 @@ const sendBillToZapier = async (
     date: billContent.date
   };
 
-  const response = await fetch("https://hooks.zapier.com/hooks/catch/23760436/u2ohknd/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
+const response = await fetch("https://hooks.zapier.com/hooks/catch/23760436/u2ohknd/", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload)
+});
+
 
   if (!response.ok) throw new Error("Zapier webhook failed");
 
