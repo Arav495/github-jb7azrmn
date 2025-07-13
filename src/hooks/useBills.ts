@@ -8,7 +8,6 @@ export const useBills = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load initial mock data with Indian context
     const mockBills: Bill[] = [
       {
         id: '1',
@@ -42,20 +41,19 @@ export const useBills = () => {
 
   const addBill = async (billData: Omit<Bill, 'id' | 'uploadDate'>) => {
     setLoading(true);
-    
+
     try {
-      // Simulate bill generation
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const newBill: Bill = {
         ...billData,
         id: Date.now().toString(),
         uploadDate: new Date(),
       };
-      
+
       setBills(prev => [newBill, ...prev]);
       setLoading(false);
-      
+
       return newBill;
     } catch (error) {
       setLoading(false);
@@ -72,10 +70,40 @@ export const useBills = () => {
   ) => {
     const results = {
       email: { success: false, message: '' },
-      sms: { success: false, message: '' }
+      sms: { success: false, message: '' },
     };
 
     try {
+      // 🔁 Send to Birdy via Pipedream
+      const payload = {
+        brand: businessInfo.brand || 'Zara',
+        store_location: businessInfo.store_location || 'Sharma Electronics, Connaught Place, New Delhi',
+        order_id: billData.billNumber || 'UNKNOWN',
+        amount: billData.total || 0,
+        date: billData.date || new Date().toISOString().slice(0, 10),
+        delivery_date: billData.date || new Date().toISOString().slice(0, 10),
+        payment_method: billData.paymentMethod || 'N/A',
+        items: billData.items.map((item: any) =>
+          typeof item === 'object'
+            ? `${item.name} (Size: ${item.size}, Color: ${item.color}, Qty: ${item.qty}, Price: ₹${item.price})`
+            : item
+        ),
+      };
+
+      console.log('📤 Sending bill to Birdy:', payload);
+      const res = await fetch('https://eoa8ejep3vj74y1.m.pipedream.net', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ Failed to send to Birdy:', errorText);
+        throw new Error('Failed to send bill to Birdy');
+      }
+
+      // 📨 Email or SMS delivery
       if (deliveryMethod === 'email' || deliveryMethod === 'both') {
         if (customerEmail) {
           results.email = await emailService.sendBill(customerEmail, billData, businessInfo);
@@ -99,6 +127,6 @@ export const useBills = () => {
     bills,
     addBill,
     sendBill,
-    loading
+    loading,
   };
 };
