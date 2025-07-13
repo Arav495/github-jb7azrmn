@@ -21,19 +21,6 @@ export const useBills = () => {
         customerName: 'Rajesh Kumar',
         transactionId: 'TXN_001',
         deliveryMethod: 'both'
-      },
-      {
-        id: '2',
-        customerEmail: 'priya.sharma@yahoo.com',
-        customerPhone: '+91 87654 32109',
-        fileName: 'receipt_002.jpg',
-        fileType: 'image',
-        uploadDate: new Date('2024-01-14'),
-        status: 'sent',
-        amount: 1250.00,
-        customerName: 'Priya Sharma',
-        transactionId: 'TXN_002',
-        deliveryMethod: 'email'
       }
     ];
     setBills(mockBills);
@@ -41,23 +28,17 @@ export const useBills = () => {
 
   const addBill = async (billData: Omit<Bill, 'id' | 'uploadDate'>) => {
     setLoading(true);
-
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
-
       const newBill: Bill = {
         ...billData,
         id: Date.now().toString(),
         uploadDate: new Date(),
       };
-
       setBills(prev => [newBill, ...prev]);
-      setLoading(false);
-
       return newBill;
-    } catch (error) {
+    } finally {
       setLoading(false);
-      throw error;
     }
   };
 
@@ -70,40 +51,35 @@ export const useBills = () => {
   ) => {
     const results = {
       email: { success: false, message: '' },
-      sms: { success: false, message: '' },
+      sms: { success: false, message: '' }
     };
 
     try {
-      // 🔁 Send to Birdy via Pipedream
-      const payload = {
-        brand: businessInfo.brand || 'Zara',
-        store_location: businessInfo.store_location || 'Sharma Electronics, Connaught Place, New Delhi',
-        order_id: billData.billNumber || 'UNKNOWN',
-        amount: billData.total || 0,
-        date: billData.date || new Date().toISOString().slice(0, 10),
-        delivery_date: billData.date || new Date().toISOString().slice(0, 10),
-        payment_method: billData.paymentMethod || 'N/A',
-        items: billData.items.map((item: any) =>
-          typeof item === 'object'
-            ? `${item.name} (Size: ${item.size}, Color: ${item.color}, Qty: ${item.qty}, Price: ₹${item.price})`
-            : item
-        ),
+      // 🟣 1. Send to Birdy via Pipedream
+      const formattedBill = {
+        brand: businessInfo.brand || 'Unknown',
+        store_location: businessInfo.address || 'N/A',
+        order_id: billData.billNumber,
+        amount: billData.totalAmount,
+        date: billData.date,
+        delivery_date: billData.deliveryDate || billData.date,
+        payment_method: billData.paymentMethod || 'Unknown',
+        items: JSON.stringify(billData.items)  // 🔥 must be a string
       };
 
-      console.log('📤 Sending bill to Birdy:', payload);
-      const res = await fetch('https://eoa8ejep3vj74y1.m.pipedream.net', {
+      const webhook = 'https://eoa8ejep3vj74y1.m.pipedream.net'; // Pipedream webhook
+      const res = await fetch(webhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formattedBill)
       });
 
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error('❌ Failed to send to Birdy:', errorText);
-        throw new Error('Failed to send bill to Birdy');
+        console.error('❌ Failed to send to Birdy API. Status:', res.status);
+        throw new Error(`Birdy API rejected the data`);
       }
 
-      // 📨 Email or SMS delivery
+      // 🟡 2. Send via Email or SMS
       if (deliveryMethod === 'email' || deliveryMethod === 'both') {
         if (customerEmail) {
           results.email = await emailService.sendBill(customerEmail, billData, businessInfo);
@@ -127,6 +103,6 @@ export const useBills = () => {
     bills,
     addBill,
     sendBill,
-    loading,
+    loading
   };
 };
